@@ -62,6 +62,7 @@
     <div class="row g-4 py-5 row-cols-1 row-cols-lg-3">
         {% for p in products %}
       <div class="feature col">
+          <img src="{{ p.product_photo.url }}" alt="{{ p }}" width="250" height="250">
         <h2>{{ p }}</h2>
         <p>{{ p.product_des }}</p>
         <a href="/product/{{ p.id }}" class="icon-link">
