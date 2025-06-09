@@ -17,3 +17,10 @@ class Product(models.Model):
 
     def __str__(self):
         return str(self.product_name)
+
+class Favorite(models.Model):
+    user_id = models.IntegerField()#ID
+    user_product = models.ForeignKey(Product, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return str(self.user_id)

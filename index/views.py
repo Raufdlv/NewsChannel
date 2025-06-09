@@ -1,18 +1,16 @@
-from django.shortcuts import render, redirect
-from .models import Category, Product
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Category, Product, Favorite
 from .forms import RegForm
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout
 from django.views import View
 
 
-# Create your views here.
 def home_page(request):
     # Достаем данные из БД
     categories = Category.objects.all()
     products = Product.objects.all()
 
-    # Отправляем данные на фронт
     context = {
         'categories': categories,
         'products': products
@@ -22,11 +20,10 @@ def home_page(request):
 
 
 def category_page(request, pk):
-    # Достаем данные из БД
+
     chosen_category = Category.objects.get(id=pk)
     current_products = Product.objects.filter(product_category=chosen_category)
 
-    # Отправляем данные на фронт
     context = {
         'category': chosen_category,
         'products': current_products
@@ -36,10 +33,8 @@ def category_page(request, pk):
 
 
 def product_page(request, pk):
-    # Достаем данные из БД
     chosen_product = Product.objects.get(id=pk)
 
-    # Отправляем данные на фронт
     context = {
         'product': chosen_product
     }
@@ -47,7 +42,6 @@ def product_page(request, pk):
     return render(request, 'product.html', context)
 
 
-# Регистрация
 class Register(View):
     template_name = 'registration/register.html'
 
@@ -55,29 +49,49 @@ class Register(View):
         context = {'form': RegForm()}
         return render(request, self.template_name, context)
 
-    # Этап 2 - отправка формы
     def post(self, request):
         form = RegForm(request.POST)
 
         if form.is_valid():
-            # Достали данные, которые ввел пользователь
             username = form.cleaned_data.get('username')
             email = form.cleaned_data.get('email')
             password = form.cleaned_data.get('password2')
 
-            # Создаем нового пользователя в БД
             user = User.objects.create_user(username=username, email=email, password=password)
             user.save()
 
-            # Аутентифицируем пользователя
             login(request, user)
 
-            # Переводим пользователя на главную страницу
             return redirect('/')
-
 
 
 # Выход из аккаунта
 def logout_view(request):
     logout(request)
     return redirect('/')
+
+
+def add_to_favorite(request, pk):
+    if request.method == 'POST':
+        product = get_object_or_404(Product, pk=pk)
+        Favorite.objects.create(
+            user_id=request.user.id,
+            user_product=product,
+        )
+        return redirect('/')
+    return redirect('/')
+
+from django.shortcuts import redirect, get_object_or_404
+from .models import Favorite
+
+
+def del_from_favorite(request, pk):
+    if request.method == 'POST':
+        Favorite.objects.filter(user_id=request.user.id, user_product_id=pk).delete()
+        return redirect('/favorite')
+
+def favorite(request):
+    user_favorite = Favorite.objects.filter(user_id=request.user.id)
+
+    context = {'favorite': user_favorite}
+    return render(request, 'favorite.html', context)
